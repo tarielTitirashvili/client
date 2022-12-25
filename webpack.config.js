@@ -2,6 +2,7 @@ const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const isDev = process.env.NODE_ENV === 'development'
@@ -9,10 +10,12 @@ const isProd = !isDev
 
 console.log('isProd', !isDev)
 
+const filename = ext => isDev ? `[name].${ext}` : `[name].[hash].${ext}`
+
 module.exports = {
   entry: './src/index.ts',
   output: {
-    filename: '[name].[contenthash].js',
+    filename: filename('js'),
     path: path.resolve(__dirname, 'build')
   },
   resolve: {
@@ -28,8 +31,9 @@ module.exports = {
     rules: [
       {
         test: /\.css$/,
-        use: [ 
-          isDev ? 'css-loader' : MiniCssExtractPlugin.loader
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader'
         ]
       },
       {
@@ -39,7 +43,6 @@ module.exports = {
       {
         test: /.(woff|woff2|eot|ttf|otf)$/,
         use: ['file-loader',] 
-        
       },
     ]
   },
@@ -54,12 +57,19 @@ module.exports = {
   },
   plugins: [
     new CleanWebpackPlugin(),
-    new MiniCssExtractPlugin,
+    new MiniCssExtractPlugin({
+      filename: filename('css'),
+      // runtime: isProd,
+    }),
     new CopyWebpackPlugin({
       patterns:[
         {
           from: path.resolve(__dirname, 'src/assets/favicon.png'),
           to:  path.resolve(__dirname, 'build')
+        },
+        {
+          from: path.resolve(__dirname, 'src/assets'),
+          to:  path.resolve(__dirname, 'build/assets')
         }
       ]
     }),
@@ -69,7 +79,18 @@ module.exports = {
       minify:{
         collapseWhitespace: isProd
       }
-    }
-    )
+    },
+    ),
+    new CssMinimizerPlugin({
+      minimizerOptions: {
+        preset: [
+          "default",
+          {
+            discardComments: { removeAll: true },
+          },
+        ],
+      },
+    }),
   ]
 }
+

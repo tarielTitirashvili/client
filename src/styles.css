@@ -6,3 +6,8 @@ h1{
   font-size: 70px;
   color: red;
 }
+.with-background{
+  background-image: url('./assets/oooo.png');
+  height: 200px;
+  width: 200px;
+}
